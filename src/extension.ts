@@ -2,7 +2,8 @@ import * as vscode from "vscode";
 import {
   activateRegexHighlighting,
   deactivateRegexHighlighting,
-  usePersonalizedRegex,
+  setPersonalizedRegex,
+  restoreDefault,
   copyTexts,
 } from "./commands";
 
@@ -20,7 +21,8 @@ export function activate(context: vscode.ExtensionContext) {
       regexHighlightingSubMenu.items = [
         { label: "Activate" },
         { label: "Deactivate" },
-        { label: "Use Personalized Regex" },
+        { label: "Set Personalized Regex" },
+        { label: "Restore To Default" },
         { label: "Copy Texts" },
       ];
       regexHighlightingSubMenu.canSelectMany = false;
@@ -32,8 +34,11 @@ export function activate(context: vscode.ExtensionContext) {
           case "Deactivate":
             deactivateRegexHighlighting();
             break;
-          case "Use Personalized Regex":
-            usePersonalizedRegex();
+          case "Set Personalized Regex":
+            setPersonalizedRegex();
+            break;
+          case "Restore To Default":
+            restoreDefault();
             break;
           case "Copy Texts":
             copyTexts();

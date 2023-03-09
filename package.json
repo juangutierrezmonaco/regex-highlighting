@@ -12,7 +12,7 @@
   "publisher": "juangutierrezmonaco",
   "repository": {
     "type": "git",
-    "url": "Your repository URL"
+    "url": "https://github.com/juangutierrezmonaco/regex-highlighting.git"
   },
   "activationEvents": [
     "*"
@@ -33,8 +33,12 @@
         "title": "Deactivate Regex Highlighting"
       },
       {
-        "command": "regexHighlighting.usePersonalizedRegex",
-        "title": "Use Personalized Regex"
+        "command": "regexHighlighting.setPersonalizedRegex",
+        "title": "Set Personalized Regex"
+      },
+      {
+        "command": "regexHighlighting.restoreDefault",
+        "title": "Restore To Default"
       },
       {
         "command": "regexHighlighting.copyTexts",
@@ -44,7 +48,7 @@
     "menus": {
       "statusBar": [
         {
-          "command": "regexHighlighting.activate",
+          "command": "regexHighlighting.openMenu",
           "text": "Regex Highlighting",
           "tooltip": "Activate Regex Highlighting"
         }
