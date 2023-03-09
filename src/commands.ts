@@ -1,9 +1,12 @@
 import * as vscode from "vscode";
-import { DecorationType } from "./types";
+import { DecorationType, RegexObject } from "./types";
 
 let decorationType: DecorationType;
-let originalRegex: RegExp = /(?<=")\s*(.*?)\s*(?=")/g;
-let currentRegex: RegExp = originalRegex;
+let originalRegexes: RegexObject[] = [
+  { pattern: /(?<=")\s*(.*?)\s*(?=")/g, files: [".ts", ".js"] },
+  { pattern: />hola</g, files: [".html"] },
+];
+let currentRegexes: RegexObject[] = originalRegexes;
 let activeEditor: vscode.TextEditor = vscode.window.activeTextEditor;
 let intervalId: NodeJS.Timeout;
 
@@ -14,17 +17,22 @@ function triggerUpdateDecorations() {
   const text = activeEditor.document.getText();
   const decorations: vscode.DecorationOptions[] = [];
   let match;
-  while ((match = currentRegex.exec(text))) {
-    const startPos = activeEditor.document.positionAt(match.index);
-    const endPos = activeEditor.document.positionAt(
-      match.index + match[0].length
-    );
-    const decoration = {
-      range: new vscode.Range(startPos, endPos),
-      hoverMessage: "Matched Regex",
-    };
-    decorations.push(decoration);
-  }
+  currentRegexes.forEach(({ pattern, files }) => {
+    if (files.some((file) => (activeEditor.document.fileName.endsWith(file)) || file === "*")) {
+      while ((match = pattern.exec(text))) {
+        const startPos = activeEditor.document.positionAt(match.index);
+        const endPos = activeEditor.document.positionAt(
+          match.index + match[0].length
+        );
+        const decoration = {
+          range: new vscode.Range(startPos, endPos),
+          hoverMessage: "Matched Regex",
+        };
+        decorations.push(decoration);
+      }
+      pattern.lastIndex = 0;
+    }
+  });
   activeEditor.setDecorations(decorationType, decorations);
 }
 
@@ -67,7 +75,7 @@ export function setPersonalizedRegex() {
   vscode.window.showInputBox(options).then((value) => {
     if (value !== undefined) {
       try {
-        currentRegex = new RegExp(value, "g");
+        currentRegexes = [{ pattern: new RegExp(value, "g"), files: ["*"] }];
         activateRegexHighlighting();
       } catch (error) {
         vscode.window.showErrorMessage(`Invalid regular expression: ${error}`);
@@ -77,30 +85,29 @@ export function setPersonalizedRegex() {
 }
 
 export function restoreDefault() {
-  currentRegex = originalRegex;
+  currentRegexes = [...originalRegexes];
   deactivateRegexHighlighting();
 }
 
 export function copyTexts() {
   if (!activeEditor) {
+    vscode.window.showInformationMessage("Open a file first to copy text!");
     return;
   }
-  const text = activeEditor.document.getText();
-  let selectedText = "";
-  let match;
-  while ((match = currentRegex.exec(text))) {
-    const startPos = activeEditor.document.positionAt(match.index);
-    const endPos = activeEditor.document.positionAt(
-      match.index + match[0].length
-    );
-    const selection = new vscode.Selection(startPos, endPos);
-    selectedText += activeEditor.document.getText(selection) + "\n";
-  }
 
-  vscode.env.clipboard.writeText(selectedText.trim()).then(() => {
-    vscode.window.showInformationMessage(
-      "Selected text has been copied to clipboard!"
-    );
-    vscode.commands.executeCommand("workbench.action.files.revert");
+  const text = activeEditor.document.getText();
+  let newText = "";
+
+  let match;
+  currentRegexes.forEach(({ pattern, files }) => {
+    if (files.some((file) => (activeEditor.document.fileName.endsWith(file)) || file === "*")) {
+      while ((match = pattern.exec(text))) {
+        newText += match[0] + "\n";
+      }
+      pattern.lastIndex = 0;
+    }
   });
+
+  vscode.env.clipboard.writeText(newText);
+  vscode.window.showInformationMessage("Text copied to clipboard!");
 }
